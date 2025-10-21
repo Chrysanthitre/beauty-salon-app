@@ -1,0 +1,11 @@
+{
+  "name": "beauty-salon-app",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "npx tailwindcss -i ./src/input.css -o ./styles.css --watch"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.0"
+  }
+}
