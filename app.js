@@ -112,31 +112,37 @@ class SalonApp {
             if (error) throw error;
 
             const html = `
-                <div class="max-w-2xl mx-auto">
-                    <button id="back-btn" class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors mb-6">
-                        ← Πίσω στη λίστα
-                    </button>
+            <div class="max-w-2xl mx-auto">
+                <button id="back-btn" class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors mb-6">
+                    ← Πίσω στη λίστα
+                </button>
 
-                    <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-                        <h2 class="text-2xl font-bold text-gray-800 mb-2">${client.first_name} ${client.last_name}</h2>
-                        <p class="text-gray-600 mb-6">📞 ${client.phone || 'Δεν υπάρχει τηλέφωνο'}</p>
-                        
-                        <div class="mb-6">
-                            <label class="block text-sm font-medium text-gray-700 mb-2">📝 Σημειώσεις & Βαφές:</label>
-                            <textarea 
-                                id="client-notes" 
-                                class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all" 
-                                rows="6"
-                                placeholder="Σημειώστε τις βαφές, το χρώμα, τις τρίχες, ή οτιδήποτε άλλο σχετικό..."
-                            >${client.notes || ''}</textarea>
-                        </div>
-                        
-                        <button class="save-notes-btn bg-pink-600 text-white px-8 py-3 rounded-lg hover:bg-pink-700 transition-colors font-medium" data-client-id="${client.id}">
-                            💾 Αποθήκευση Σημειώσεων
-                        </button>
+                <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-2">${client.first_name} ${client.last_name}</h2>
+                    <p class="text-gray-600 mb-6">📞 ${client.phone || 'Δεν υπάρχει τηλέφωνο'}</p>
+                    
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">📝 Σημειώσεις & Βαφές:</label>
+                        <textarea 
+                            id="client-notes" 
+                            class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all" 
+                            rows="6"
+                            placeholder="Σημειώστε τις βαφές, το χρώμα, τις τρίχες, ή οτιδήποτε άλλο σχετικό..."
+                        >${client.notes || ''}</textarea>
                     </div>
+                    
+                   <div class="flex gap-3 mt-6">
+                    <button class="save-notes-btn bg-pink-600 text-white px-8 py-3 rounded-lg hover:bg-pink-700 transition-colors font-medium" data-client-id="${client.id}">
+                        💾 Αποθήκευση Σημειώσεων
+                    </button>
+                    
+                    <button class="delete-client-btn bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 transition-colors font-medium" data-client-id="${client.id}">
+                        🗑️ Διαγραφή Πελάτη
+                    </button>
                 </div>
-            `;
+                </div>
+            </div>
+        `;
 
             document.getElementById('app').innerHTML = html;
             this.currentView = 'client-details';
@@ -276,6 +282,14 @@ class SalonApp {
                 this.saveClientNotes();
             }
 
+            // ΔΙΑΓΡΑΦΗ ΠΕΛΑΤΗ
+            if (e.target.classList.contains('delete-client-btn')) {
+                const clientId = e.target.dataset.clientId;
+                if (confirm('Είστε σίγουρος/η ότι θέλετε να διαγράψετε αυτόν τον πελάτη; Αυτή η ενέργεια δεν μπορεί να αναιρεθεί.')) {
+                    this.deleteClient(clientId);
+                }
+            }
+
             // ΑΠΟΘΗΚΕΥΣΗ ΝΕΟΥ ΠΕΛΑΤΗ
             if (e.target.id === 'save-client-btn') {
                 this.saveNewClient();
@@ -283,6 +297,7 @@ class SalonApp {
         });
     }
 
+    // ΠΛΟΗΓΗΣΗ ΠΙΣΩ
     goBack() {
         if (this.currentView === 'clients' || this.currentView === 'add-client') {
             this.showAlphabetView();
@@ -290,6 +305,27 @@ class SalonApp {
             this.showClientsView(this.currentLetter);
         }
     }
+
+    // ΔΙΑΓΡΑΦΗ ΠΕΛΑΤΗ ΑΠΟ ΤΗ ΒΑΣΗ
+    async deleteClient(clientId) {
+        try {
+            const { error } = await supabase
+                .from('clients')
+                .delete()
+                .eq('id', clientId);
+
+            if (error) throw error;
+
+            alert('Ο πελάτης διαγράφηκε επιτυχώς!');
+            this.showAlphabetView(); // Επιστροφή στην αρχική οθόνη
+
+        } catch (error) {
+            console.error('Σφάλμα διαγραφής πελάτη:', error);
+            alert('Σφάλμα διαγραφής πελάτη. Δοκιμάστε ξανά.');
+        }
+    }
+
+
 }
 
 // ΕΚΚΙΝΗΣΗ ΕΦΑΡΜΟΓΗΣ
