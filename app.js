@@ -131,18 +131,20 @@ class SalonApp {
                         >${client.notes || ''}</textarea>
                     </div>
                     
-                   <div class="flex gap-3 mt-6">
-                    <button class="save-notes-btn bg-pink-600 text-white px-8 py-3 rounded-lg hover:bg-pink-700 transition-colors font-medium" data-client-id="${client.id}">
+                   <div class="flex flex-col gap-3 mt-6">
+                    <button class="save-notes-btn bg-pink-600 text-white px-8 py-3 rounded-lg hover:bg-pink-700 transition-colors font-medium w-full" data-client-id="${client.id}">
                         💾 Αποθήκευση Σημειώσεων
                     </button>
-
-                    <button class="edit-client-btn bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium" data-client-id="${client.id}">
-                        ✏️ Επεξεργασία Στοιχείων
-                    </button>
                     
-                    <button class="delete-client-btn bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 transition-colors font-medium" data-client-id="${client.id}">
-                        🗑️ Διαγραφή Πελάτη
-                    </button>
+                    <div class="flex gap-3">
+                        <button class="edit-client-btn bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium flex-1" data-client-id="${client.id}">
+                            ✏️ Επεξεργασία
+                        </button>
+                        
+                        <button class="delete-client-btn bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 transition-colors font-medium flex-1" data-client-id="${client.id}">
+                            🗑️ Διαγραφή
+                        </button>
+                    </div>
                 </div>
                 </div>
             </div>
