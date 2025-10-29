@@ -135,6 +135,10 @@ class SalonApp {
                     <button class="save-notes-btn bg-pink-600 text-white px-8 py-3 rounded-lg hover:bg-pink-700 transition-colors font-medium" data-client-id="${client.id}">
                         💾 Αποθήκευση Σημειώσεων
                     </button>
+
+                    <button class="edit-client-btn bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium" data-client-id="${client.id}">
+                        ✏️ Επεξεργασία Στοιχείων
+                    </button>
                     
                     <button class="delete-client-btn bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 transition-colors font-medium" data-client-id="${client.id}">
                         🗑️ Διαγραφή Πελάτη
@@ -294,12 +298,24 @@ class SalonApp {
             if (e.target.id === 'save-client-btn') {
                 this.saveNewClient();
             }
+
+            // ΕΠΕΞΕΡΓΑΣΙΑ ΠΕΛΑΤΗ
+            if (e.target.classList.contains('edit-client-btn')) {
+                const clientId = e.target.dataset.clientId;
+                this.showEditClientView(clientId);
+            }
+
+            // ΕΝΗΜΕΡΩΣΗ ΠΕΛΑΤΗ
+            if (e.target.id === 'update-client-btn') {
+                const clientId = e.target.dataset.clientId;
+                this.updateClient(clientId);
+            }
         });
     }
 
     // ΠΛΟΗΓΗΣΗ ΠΙΣΩ
     goBack() {
-        if (this.currentView === 'clients' || this.currentView === 'add-client') {
+        if (this.currentView === 'clients' || this.currentView === 'add-client' || this.currentView === 'edit-client') {
             this.showAlphabetView();
         } else if (this.currentView === 'client-details') {
             this.showClientsView(this.currentLetter);
@@ -322,6 +338,96 @@ class SalonApp {
         } catch (error) {
             console.error('Σφάλμα διαγραφής πελάτη:', error);
             alert('Σφάλμα διαγραφής πελάτη. Δοκιμάστε ξανά.');
+        }
+    }
+
+    // ΟΘΟΝΗ ΕΠΕΞΕΡΓΑΣΙΑΣ ΠΕΛΑΤΗ
+    async showEditClientView(clientId) {
+        try {
+            // Φόρτωση στοιχείων πελάτη
+            const { data: client, error } = await supabase
+                .from('clients')
+                .select('*')
+                .eq('id', clientId)
+                .single();
+
+            if (error) throw error;
+
+            const html = `
+                <div class="max-w-md mx-auto">
+                    <button id="back-btn" class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors mb-6">
+                        ← Πίσω στα Στοιχεία
+                    </button>
+                    
+                    <h2 class="text-2xl font-bold text-gray-800 mb-6">Επεξεργασία Πελάτη</h2>
+                    
+                    <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">👤 Όνομα *</label>
+                                <input type="text" id="edit-first-name" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+                                    value="${client.first_name}" required>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">📇 Επίθετο *</label>
+                                <input type="text" id="edit-last-name" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+                                    value="${client.last_name}" required>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">📞 Τηλέφωνο</label>
+                                <input type="tel" id="edit-phone" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+                                    value="${client.phone || ''}">
+                            </div>
+                            
+                            <button id="update-client-btn" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors w-full font-medium" data-client-id="${client.id}">
+                                💾 Ενημέρωση Πελάτη
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('app').innerHTML = html;
+            this.currentView = 'edit-client';
+            this.currentClientId = clientId;
+
+        } catch (error) {
+            console.error('Σφάλμα φόρτωσης πελάτη:', error);
+        }
+    }
+
+    // ΕΝΗΜΕΡΩΣΗ ΣΤΟΙΧΕΙΩΝ ΠΕΛΑΤΗ
+    async updateClient(clientId) {
+        const firstName = document.getElementById('edit-first-name').value;
+        const lastName = document.getElementById('edit-last-name').value;
+        const phone = document.getElementById('edit-phone').value;
+
+        if (!firstName || !lastName) {
+            alert('Παρακαλώ συμπληρώστε τουλάχιστον το όνομα και το επίθετο');
+            return;
+        }
+
+        try {
+            const { error } = await supabase
+                .from('clients')
+                .update({
+                    first_name: firstName,
+                    last_name: lastName,
+                    phone: phone || null,
+                    updated_at: new Date()
+                })
+                .eq('id', clientId);
+
+            if (error) throw error;
+
+            alert(`Τα στοιχεία του/της ${firstName} ${lastName} ενημερώθηκαν!`);
+            this.showClientDetails(clientId); // Επιστροφή στα στοιχεία
+
+        } catch (error) {
+            console.error('Σφάλμα ενημέρωσης πελάτη:', error);
+            alert('Σφάλμα ενημέρωσης πελάτη. Δοκιμάστε ξανά.');
         }
     }
 
