@@ -22,6 +22,7 @@ class SalonApp {
     }
 
     // ΟΘΟΝΗ 1: Λίστα αλφαβήτου
+
     showAlphabetView() {
         const alphabet = 'ΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩ';
 
@@ -29,6 +30,23 @@ class SalonApp {
             <div class="max-w-4xl mx-auto">
                 <h2 class="text-2xl font-bold text-gray-800 mb-8 text-center">Επίλεξε Γράμμα Επωνύμου</h2>
                 
+                <!-- ΜΠΑΡΑ ΑΝΑΖΗΤΗΣΗΣ ΜΕ ΒΑΣΗ ΟΝΟΜΑ -->
+                <div class="mb-8">
+                    <div class="relative">
+                        <input 
+                            type="text" 
+                            id="search-by-name" 
+                            class="w-full p-4 pl-12 rounded-lg border border-gray-300 focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                            placeholder="🔍 Αναζήτηση με βάση το όνομα (π.χ. Μαρία)"
+                        >
+                       
+                    </div>
+                    <div id="search-results" class="mt-4 space-y-2 hidden">
+                        <!-- Αποτελέσματα αναζήτησης θα εμφανίζονται εδώ -->
+                    </div>
+                </div>
+                
+                <!-- ΑΛΦΑΒΗΤΟ -->
                 <div class="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3">
                     ${alphabet.split('').map(letter => `
                         <button class="alphabet-btn bg-white p-4 rounded-lg shadow-sm border border-gray-200 hover:bg-pink-50 hover:border-pink-300 transition-all duration-200 text-lg font-semibold text-gray-700" 
@@ -42,6 +60,7 @@ class SalonApp {
 
         document.getElementById('app').innerHTML = html;
         this.currentView = 'alphabet';
+        this.setupSearchEventListener(); // Προσθήκη αυτής της γραμμής
     }
 
     // ΟΘΟΝΗ 2: Λίστα πελατών για συγκεκριμένο γράμμα (ΜΕ SUPABASE)
@@ -63,7 +82,7 @@ class SalonApp {
                     </button>
 
                     <h2 class="text-2xl font-bold text-gray-800 mb-2">Πελάτες - Γράμμα ${letter}</h2>
-                    <p class="text-gray-600 mb-6">${clients.length} πελάτης${clients.length !== 1 ? 'ες' : ''} βρέθηκαν</p>
+                    <p class="text-gray-600 mb-6">${clients.length} πελάτ${clients.length !== 1 ? 'ισσες' : 'ισσα'} βρέθηκαν</p>
                     
                     <button id="add-client-btn" class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors mb-6">
                         ➕ Προσθήκη Νέας Πελάτισσας
@@ -257,6 +276,81 @@ class SalonApp {
         }
     }
 
+
+    // ΑΝΑΖΗΤΗΣΗ ΠΕΛΑΤΩΝ ΜΕ ΒΑΣΗ ΤΟ ΟΝΟΜΑ
+    async searchClientsByName(searchTerm) {
+        if (searchTerm.length < 2) {
+            document.getElementById('search-results').classList.add('hidden');
+            return;
+        }
+
+        try {
+            const { data: clients, error } = await supabase
+                .from('clients')
+                .select('*')
+                .ilike('first_name', `%${searchTerm}%`)
+                .order('first_name')
+                .limit(10);
+
+            if (error) throw error;
+
+            const resultsContainer = document.getElementById('search-results');
+
+            if (clients.length === 0) {
+                resultsContainer.innerHTML = `
+                    <div class="bg-yellow-50 border border-yellow-200 p-4 rounded-lg text-center text-yellow-700">
+                        Δεν βρέθηκαν πελάτες με όνομα "${searchTerm}"
+                    </div>
+                `;
+                resultsContainer.classList.remove('hidden');
+                return;
+            }
+
+            resultsContainer.innerHTML = `
+                <div class="text-sm text-gray-600 mb-2">
+                    Βρέθηκαν ${clients.length} πελάτ${clients.length !== 1 ? 'ισσες' : 'ισσα'}:
+                </div>
+                <div class="space-y-2">
+                    ${clients.map(client => `
+                        <div class="search-result bg-white p-3 rounded-lg shadow-sm border border-gray-200 hover:shadow-md hover:border-pink-300 transition-all duration-200 cursor-pointer" 
+                            data-client-id="${client.id}">
+                            <div class="font-medium text-gray-800">${client.first_name} ${client.last_name}</div>
+                            <div class="text-gray-600 text-sm mt-1">📞 ${client.phone || 'Δεν υπάρχει τηλέφωνο'}</div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+
+            resultsContainer.classList.remove('hidden');
+
+        } catch (error) {
+            console.error('Σφάλμα αναζήτησης:', error);
+        }
+    }
+
+
+    // SETUP SEARCH EVENT LISTENER
+    setupSearchEventListener() {
+        const searchInput = document.getElementById('search-by-name');
+        if (!searchInput) return;
+
+        // Debounce για καλύτερη απόδοση
+        let timeout;
+        searchInput.addEventListener('input', (e) => {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => {
+                this.searchClientsByName(e.target.value.trim());
+            }, 300); // 300ms delay
+        });
+
+        // Clear search όταν κάνεις κλικ έξω
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('#search-results') && e.target.id !== 'search-by-name') {
+                document.getElementById('search-results').classList.add('hidden');
+            }
+        });
+    }
+
     // EVENT HANDLERS
     setupEventListeners() {
         document.addEventListener('click', (e) => {
@@ -279,6 +373,13 @@ class SalonApp {
             // ΚΛΙΚ ΣΕ ΠΕΛΑΤΗ (ΔΙΟΡΘΩΜΕΝΟ)
             if (e.target.closest('.client-card')) {
                 const clientCard = e.target.closest('.client-card');
+                const clientId = clientCard.dataset.clientId;
+                this.showClientDetails(clientId);
+            }
+
+            // ΣΤΟ setupEventListeners(), ΜΕΤΑ ΤΟ "client-card" EVENT:
+            if (e.target.closest('.search-result')) {
+                const clientCard = e.target.closest('.search-result');
                 const clientId = clientCard.dataset.clientId;
                 this.showClientDetails(clientId);
             }
