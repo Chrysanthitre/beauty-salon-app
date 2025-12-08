@@ -1,5 +1,5 @@
 // app.js - ΕΝΗΜΕΡΩΜΕΝΟ ΜΕ SUPABASE
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 import { SUPABASE_CONFIG } from './src/config.js'
 
 // Σύνδεση με Supabase
@@ -63,7 +63,7 @@ class SalonApp {
                     </button>
 
                     <h2 class="text-2xl font-bold text-gray-800 mb-2">Πελάτες - Γράμμα ${letter}</h2>
-                    <p class="text-gray-600 mb-6">${clients.length} πελάτης${clients.length !== 1 ? 'ες' : ''} βρέθηκαν</p>
+                    <p class="text-gray-600 mb-6">${clients.length} πελάτισσ${clients.length !== 1 ? 'ες' : 'α'} βρέθηκαν</p>
                     
                     <button id="add-client-btn" class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors mb-6">
                         ➕ Προσθήκη Νέας Πελάτισσας
